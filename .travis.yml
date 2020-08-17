@@ -1,0 +1,25 @@
+language: generic
+sudo: required
+services:
+ - docker
+
+before_install:
+ - docker build -t adamagatt/webdungeon_backend -f backend/Dockerfile .
+
+script:
+ - docker push adamagatt/webdungeon_backend
+# Submit cloudformation template
+# - docker run -e CI=true adamagatt/docker-react npm run test
+
+#deploy:
+#    provider: cloudformation
+#    region: "ap-southeast-2"
+#    access_key_id: $AWS_ACCESS_KEY
+#    secret_access_key: $AWS_SECRET_KEY
+#    template: ./cloudformation.yml
+#    stack_name: webdungeon
+#    # opt in to dpl v2
+#    edge: true
+#    # Only deploy when change made to master branch
+#    on:
+#        branch: master
