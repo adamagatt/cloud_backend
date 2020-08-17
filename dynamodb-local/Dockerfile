@@ -1,5 +1,9 @@
 FROM amazon/dynamodb-local
 
-#COPY ./testdb.db ./
+# Upload db dump file and provide access to container user
+COPY ./anything_ap-southeast-2.db /home/dynamodblocal/.
+USER root
+RUN chown dynamodblocal ./anything_ap-southeast-2.db
+USER dynamodblocal
 
-CMD ["java", "-Djava.library.path=./DynamoDBLocal_lib", "-jar DynamoDBLocal.jar"]
+CMD ["-jar", "DynamoDBLocal.jar"]

@@ -1,9 +1,9 @@
 version: '3'
     
 services:
-  db:
+  dynamodb-local:
     container_name: dynamodb-local
-    image: amazon/dynamodb-local
+    build: dynamodb-local
     ports:
       - "8000:8000"
     networks: 
@@ -17,7 +17,7 @@ services:
     ports:
       - "5000:5000"
     depends_on:
-      - db
+      - dynamodb-local
     networks:
       - backend
 
