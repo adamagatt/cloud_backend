@@ -10,6 +10,7 @@ script:
     # Set up docker credentials and then push the built image
  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
  - docker push adamgatt/webdungeon_backend
+ - docker logout # Remove credentials after pushing to dockerhub
 # Submit cloudformation template
 # - docker run -e CI=true adamagatt/docker-react npm run test
 
