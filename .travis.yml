@@ -4,10 +4,10 @@ services:
  - docker
 
 before_install:
- - docker build -t adamagatt/webdungeon_backend -f backend/Dockerfile .
+ - docker build -t adamgatt/webdungeon_backend -f backend/Dockerfile .
 
 script:
- - docker push adamagatt/webdungeon_backend
+ - docker push adamgatt/webdungeon_backend
 # Submit cloudformation template
 # - docker run -e CI=true adamagatt/docker-react npm run test
 
