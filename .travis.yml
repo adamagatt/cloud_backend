@@ -4,7 +4,7 @@ services:
  - docker
 
 before_install:
- - docker build -t adamgatt/webdungeon_backend -f backend/Dockerfile .
+ - docker build -t adamgatt/webdungeon_backend -f backend/Dockerfile backend
 
 script:
  - docker push adamgatt/webdungeon_backend
