@@ -218,7 +218,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: ECS Security Group
-      VpcId: !Ref 'VpcId'
+      VpcId: !Ref VPC
 
   EcsSecurityGroupHTTPinbound:
     Type: AWS::EC2::SecurityGroupIngress
@@ -259,7 +259,7 @@ Resources:
       LoadBalancerAttributes:
       - Key: idle_timeout.timeout_seconds
         Value: '30'
-      Subnets: !Ref 'SubnetId'
+      Subnets: !Ref PrivateSubnet
       SecurityGroups: [!Ref 'EcsSecurityGroup']
 
   ALBListener:
@@ -299,12 +299,12 @@ Resources:
       Port: 80
       Protocol: HTTP
       UnhealthyThresholdCount: 2
-      VpcId: !Ref 'VpcId'
+      VpcId: !Ref VPC
 
   ECSAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      VPCZoneIdentifier: !Ref 'SubnetId'
+      VPCZoneIdentifier: !Ref PrivateSubnet
       LaunchConfigurationName: !Ref 'ContainerInstances'
       MinSize: '0'
       MaxSize: '2'
@@ -319,11 +319,10 @@ Resources:
   ContainerInstances:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
-      ImageId: !FindInMap ami-5781be34
+      ImageId: ami-5781be34
       SecurityGroups: [!Ref 'EcsSecurityGroup']
-      InstanceType: !Ref 'InstanceType'
+      InstanceType: t2.micro
       IamInstanceProfile: !Ref 'EC2InstanceProfile'
-      KeyName: !Ref 'KeyName'
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash -xe
