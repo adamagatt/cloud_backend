@@ -142,15 +142,6 @@ Resources:
         -
           AttributeName: "ID"
           AttributeType: "S"
-        -
-          AttributeName: "Name"
-          AttributeType: "S"
-        -
-          AttributeName: "XPosition"
-          AttributeType: "N"
-        -
-          AttributeName: "YPosition"
-          AttributeType: "N"
       KeySchema:
         -
           AttributeName: "ID"
