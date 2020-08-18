@@ -11,16 +11,15 @@ script:
  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
  - docker push adamgatt/webdungeon_backend
  - docker logout # Remove credentials after pushing to dockerhub
-# Submit cloudformation template
-# - docker run -e CI=true adamagatt/docker-react npm run test
 
 deploy:
     provider: cloudformation
     region: ap-southeast-2
-    access_key_id: $AWS_ACCESS_KEY
-    secret_access_key: $AWS_SECRET_KEY
     template: ./cloudformation.yml
     stack_name: webdungeon
+    access_key_id: $AWS_ACCESS_KEY
+    secret_access_key: $AWS_SECRET_KEY
+    capabilities: CAPABILITY_IAM
     # opt in to dpl v2
     edge: true
     # Only deploy when change made to master branch
