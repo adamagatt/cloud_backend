@@ -102,12 +102,23 @@ Resources:
       RouteTableId: !Ref PrivateRouteTable
       SubnetId: !Ref PrivateSubnet
 
-  NoIngressSecurityGroup:
+  ECSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-        GroupName: "no-ingress-sg"
-        GroupDescription: "Security group with no ingress rule"
+        GroupName: "ecs-security-group"
+        GroupDescription: "Security group allowing HTTP access to backend server"
         VpcId: !Ref VPC
+        SecurityGroupIngress:
+          -
+            CidrIp: 0.0.0.0/0
+            Description: HTTP access on port 5000
+            FromPort: 5000
+            ToPort: 5000
+            IpProtocol: TCP
+            #SourcePrefixListId: String
+            #SourceSecurityGroupId: String
+            #SourceSecurityGroupName: String
+            #SourceSecurityGroupOwnerId: String
 
   ### Gateways ###
   InternetGateway:
@@ -266,7 +277,7 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
           SecurityGroups:
-            - !Ref NoIngressSecurityGroup
+            - !Ref ECSSecurityGroup
           Subnets:
             - !Ref PrivateSubnet
       TaskDefinition: !Ref TaskDefinition
@@ -304,6 +315,6 @@ Outputs:
     Description: A reference to the private subnet in the 1st Availability Zone
     Value: !Ref PrivateSubnet
 
-  NoIngressSecurityGroup:
-    Description: Security group with no ingress rule
-    Value: !Ref NoIngressSecurityGroup
+  ECSSecurityGroup:
+    Description: Security group for running ECS tasks
+    Value: !Ref ECSSecurityGroup
