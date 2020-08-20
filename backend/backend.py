@@ -1,9 +1,13 @@
 import boto3
 from flask import Flask
+import os
+
+def get_db_endpoint() -> str:
+    return os.getenv('DB_ENDPOINT', '')
 
 # For a Boto3 client.
 ddb = boto3.client('dynamodb', 
-    endpoint_url='http://dynamodb-local:8000',
+    endpoint_url=get_db_endpoint(),
     region_name='ap-southeast-2',
     aws_access_key_id='anything',
     aws_secret_access_key='anything'

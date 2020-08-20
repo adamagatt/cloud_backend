@@ -325,6 +325,9 @@ Resources:
           Image: adamgatt/webdungeon_backend
           PortMappings:
             - ContainerPort: 5000
+          Environment:
+            - Name: DB_ENDPOINT
+              Value:
       CPU: 256
       Memory: 512
 
