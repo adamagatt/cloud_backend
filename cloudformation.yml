@@ -9,57 +9,64 @@ Parameters:
     Type: String
     Default: webdungeon_vpc
 
-  VpcCIDR:
-    Description: Please enter the IP range (CIDR notation) for this VPC
-    Type: String
-    Default: 10.192.0.0/16
-
-  PublicSubnetCIDR:
-    Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
-    Type: String
-    Default: 10.192.10.0/24
-
-  PrivateSubnetCIDR:
-    Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
-    Type: String
-    Default: 10.192.20.0/24
-
 Resources:
   ###  VPC and subnets ###
   VPC:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: !Ref VpcCIDR
+      CidrBlock: 10.192.0.0/16
       EnableDnsSupport: true
       EnableDnsHostnames: true
       Tags:
         - Key: Name
           Value: !Ref EnvironmentName
 
-  PublicSubnet:
+  PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
         VpcId: !Ref VPC
         AvailabilityZone: !Select [ 0, !GetAZs '' ]
-        CidrBlock: !Ref PublicSubnetCIDR
+        CidrBlock: 10.192.100.0/24
         MapPublicIpOnLaunch: true
         Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName} Public Subnet (AZ1)
 
-  PrivateSubnet:
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+        VpcId: !Ref VPC
+        AvailabilityZone: !Select [ 1, !GetAZs '' ]
+        CidrBlock: 10.192.120.0/24
+        MapPublicIpOnLaunch: true
+        Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Public Subnet (AZ2)
+
+  PrivateSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
         VpcId: !Ref VPC
         AvailabilityZone: !Select [ 0, !GetAZs  '' ]
-        CidrBlock: !Ref PrivateSubnetCIDR
+        CidrBlock: 10.192.140.0/24
         MapPublicIpOnLaunch: false
         Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName} Private Subnet (AZ1)
 
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+        VpcId: !Ref VPC
+        AvailabilityZone: !Select [ 1, !GetAZs  '' ]
+        CidrBlock: 10.192.160.0/24
+        MapPublicIpOnLaunch: false
+        Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Private Subnet (AZ2)
+
   ### Route tables and security groups ###
-  PublicRouteTable:
+  PublicRouteTable1:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
@@ -67,21 +74,43 @@ Resources:
         - Key: Name
           Value: !Sub ${EnvironmentName} Public Routes
 
-  DefaultPublicRoute:
+  DefaultPublic1Route:
     Type: AWS::EC2::Route
     DependsOn: InternetGatewayAttachment
     Properties:
-      RouteTableId: !Ref PublicRouteTable
+      RouteTableId: !Ref PublicRouteTable1
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
 
-  PublicSubnetRouteTableAssociation:
+  PublicSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      RouteTableId: !Ref PublicRouteTable
-      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable1
+      SubnetId: !Ref PublicSubnet1
 
-  PrivateRouteTable:
+  PublicRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Public Routes
+
+  DefaultPublic2Route:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable2
+      SubnetId: !Ref PublicSubnet2
+
+  PrivateRouteTable1:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
@@ -89,36 +118,68 @@ Resources:
         - Key: Name
           Value: !Sub ${EnvironmentName} Private Routes (AZ1)
 
-  DefaultPrivateRoute:
+  DefaultPrivate1Route:
     Type: AWS::EC2::Route
     Properties:
-      RouteTableId: !Ref PrivateRouteTable
+      RouteTableId: !Ref PrivateRouteTable1
       DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NatGateway
+      NatGatewayId: !Ref NatGateway1
 
-  PrivateSubnetRouteTableAssociation:
+  PrivateSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      RouteTableId: !Ref PrivateRouteTable
-      SubnetId: !Ref PrivateSubnet
+      RouteTableId: !Ref PrivateRouteTable1
+      SubnetId: !Ref PrivateSubnet1
 
-  ECSSecurityGroup:
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Private Routes (AZ2)
+
+  DefaultPrivate2Route:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway2
+
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      SubnetId: !Ref PrivateSubnet2
+
+  LoadBalancerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-        GroupName: "ecs-security-group"
-        GroupDescription: "Security group allowing HTTP access to backend server"
+        GroupName: "loadbalancer-security-group"
+        GroupDescription: "All access to load balancer from open Internet"
         VpcId: !Ref VPC
         SecurityGroupIngress:
           -
-            CidrIp: 0.0.0.0/0
             Description: HTTP access on port 5000
+            CidrIp: 0.0.0.0/0
             FromPort: 5000
             ToPort: 5000
             IpProtocol: TCP
-            #SourcePrefixListId: String
-            #SourceSecurityGroupId: String
-            #SourceSecurityGroupName: String
-            #SourceSecurityGroupOwnerId: String
+
+  TaskSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+        GroupName: "task-security-group"
+        GroupDescription: "Allow access to server tasks from public subnet"
+        VpcId: !Ref VPC
+        SecurityGroupIngress:
+          -
+            Description: HTTP access on port 5000
+            SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+            FromPort: 5000
+            ToPort: 5000
+            IpProtocol: TCP
+
 
   ### Gateways ###
   InternetGateway:
@@ -134,13 +195,25 @@ Resources:
       InternetGatewayId: !Ref InternetGateway
       VpcId: !Ref VPC
 
-  NatGateway:
+  NatGateway1:
     Type: AWS::EC2::NatGateway
     Properties:
-      AllocationId: !GetAtt NatGatewayEIP.AllocationId
-      SubnetId: !Ref PublicSubnet
+      AllocationId: !GetAtt NatGateway1EIP.AllocationId
+      SubnetId: !Ref PublicSubnet1
 
-  NatGatewayEIP:
+  NatGateway1EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+        Domain: vpc
+
+  NatGateway2:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGateway2EIP.AllocationId
+      SubnetId: !Ref PublicSubnet2
+
+  NatGateway2EIP:
     Type: AWS::EC2::EIP
     DependsOn: InternetGatewayAttachment
     Properties:
@@ -187,7 +260,8 @@ Resources:
             Principal: "*"
             Resource: "*"
       RouteTableIds:
-        - !Ref 'PrivateRouteTable'
+        - !Ref 'PrivateRouteTable1'
+        - !Ref 'PrivateRouteTable2'
       ServiceName: !Join [ "", [ "com.amazonaws.", { "Ref": "AWS::Region" }, ".dynamodb" ] ]
       VpcId: !Ref 'VPC'
 
@@ -277,10 +351,46 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
           SecurityGroups:
-            - !Ref ECSSecurityGroup
+            - !Ref TaskSecurityGroup
           Subnets:
-            - !Ref PrivateSubnet
+            - !Ref PrivateSubnet1
+            - !Ref PrivateSubnet2
       TaskDefinition: !Ref TaskDefinition
+      LoadBalancers:
+        -
+          TargetGroupArn: !Ref TargetGroup
+          ContainerPort: 5000
+          ContainerName: webdungeon-backend
+
+  # Application load balancer in the public subnet to route incoming
+  # requests and create new tasks as required
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: webdungeon-backend-loadbalancer
+      Type: application
+      IpAddressType: ipv4
+      Scheme: internet-facing
+      SecurityGroups: 
+        - !Ref LoadBalancerSecurityGroup
+      Subnets: 
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+
+  LoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties: 
+      DefaultActions: 
+        -
+          Type: forward
+          ForwardConfig:
+            TargetGroups:
+              -
+                TargetGroupArn: !Ref TargetGroup
+                Weight: 1
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 5000
+      Protocol: HTTP
 
   # A target group. This is used for keeping track of all the tasks, and
   # what IP addresses / port numbers they have. You can query it yourself,
@@ -301,20 +411,13 @@ Resources:
       Protocol: HTTP
       UnhealthyThresholdCount: 2
       VpcId: !Ref VPC
+    DependsOn: LoadBalancer
 
 Outputs:
   VPC:
     Description: A reference to the created VPC
     Value: !Ref VPC
 
-  PublicSubnet:
-    Description: A reference to the public subnet in the 1st Availability Zone
-    Value: !Ref PublicSubnet
-
-  PrivateSubnet:
-    Description: A reference to the private subnet in the 1st Availability Zone
-    Value: !Ref PrivateSubnet
-
-  ECSSecurityGroup:
+  TaskSecurityGroup:
     Description: Security group for running ECS tasks
-    Value: !Ref ECSSecurityGroup
+    Value: !Ref TaskSecurityGroup
