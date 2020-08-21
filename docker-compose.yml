@@ -22,7 +22,7 @@ services:
     networks:
       - backend
     environment:
-      - DB_ENDPOINT=http://dynamodb-local:8000
+      - LOCAL_DB_ENDPOINT=http://dynamodb-local:8000
 
 networks:
   backend:
