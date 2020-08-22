@@ -1,5 +1,6 @@
 import boto3
 from flask import Flask
+import json
 from typing import Optional
 import os
 
@@ -28,5 +29,6 @@ def hello():
 @app.route('/test/')
 def test_dynamodb():
     ddb = boto3.client('dynamodb', **ddb_keyargs)
-    response = ddb.list_tables()
-    return {'message': response['TableNames']}
+    return {'message': json.dumps(ddb)}
+    #response = ddb.list_tables()
+    #return {'message': response['TableNames']}

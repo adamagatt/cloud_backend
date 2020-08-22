@@ -318,6 +318,7 @@ Resources:
     Properties:
       Family: webdungeon-backend
       NetworkMode: awsvpc
+      ExecutionRoleArn: !Ref TaskRole
       RequiresCompatibilities:
         - FARGATE
       ContainerDefinitions:
@@ -325,8 +326,38 @@ Resources:
           Image: adamgatt/webdungeon_backend
           PortMappings:
             - ContainerPort: 5000
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: ap-southeast-2
+              awslogs-group: webdungeon-backend-logs
+              awslogs-stream-prefix: ecs
       CPU: 256
       Memory: 512
+
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      Description: "DynamoDB access for ECS tasks"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        -
+          PolicyName: access-dynamo-db
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:*
+              Resource: "*"
 
   # Cluster that new containers will be launched into
   Cluster:
