@@ -41,15 +41,15 @@ def register_player():
 
     player_id = Hashids(salt=HASH_SALT).encode(uniform(1, 1_000_000))
     start_location = {
-        'x': uniform(0, 10),
-        'y': uniform(0, 10)
+        'x': {'N': uniform(0, 10)},
+        'y': {'N': uniform(0, 10)}
     }
     response = ddb.put_item(
         TableName='Player',
         Item={
-            'ID': player_id,
-            'name': player_name,
-            'location': start_location
+            'ID': {'S': player_id},
+            'name': {'S': player_name},
+            'location': {'M': start_location}
         }
     )
     return response
