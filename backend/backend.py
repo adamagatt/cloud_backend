@@ -29,6 +29,5 @@ def hello():
 @app.route('/test/')
 def test_dynamodb():
     ddb = boto3.client('dynamodb', **ddb_keyargs)
-    return {'message': json.dumps(ddb)}
-    #response = ddb.list_tables()
-    #return {'message': response['TableNames']}
+    response = ddb.list_tables()
+    return {'message': response['TableNames']}
