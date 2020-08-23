@@ -164,7 +164,7 @@ Resources:
             CidrIp: 0.0.0.0/0
             FromPort: 5000
             ToPort: 5000
-            IpProtocol: TCP
+            IpProtocol: tcp
 
   TaskSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -178,7 +178,7 @@ Resources:
             SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
             FromPort: 5000
             ToPort: 5000
-            IpProtocol: TCP
+            IpProtocol: tcp
 
 
   ### Gateways ###
@@ -275,7 +275,7 @@ Resources:
             Effect: "Allow"
             Principal:
               Service:
-                - application-autoscaling.amazonaws.com
+                - ecs-tasks.amazonaws.com
             Action:
               - "sts:AssumeRole"
       Path: "/"
@@ -315,10 +315,12 @@ Resources:
   # container to run, and what resource requirements it has.
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroup
     Properties:
       Family: webdungeon-backend
       NetworkMode: awsvpc
       ExecutionRoleArn: !Ref TaskRole
+      TaskRoleArn: !Ref TaskRole
       RequiresCompatibilities:
         - FARGATE
       ContainerDefinitions:
@@ -330,10 +332,15 @@ Resources:
             LogDriver: awslogs
             Options:
               awslogs-region: ap-southeast-2
-              awslogs-group: webdungeon-backend-logs
+              awslogs-group: !Ref LogGroup
               awslogs-stream-prefix: ecs
       CPU: 256
       Memory: 512
+
+  LogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: ecs-web-dungeon-backend-logs
 
   TaskRole:
     Type: AWS::IAM::Role
@@ -349,14 +356,21 @@ Resources:
             Action:
               - sts:AssumeRole
       Policies:
-        -
-          PolicyName: access-dynamo-db
+        - PolicyName: access-dynamo-db
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
             - Effect: Allow
               Action:
                 - dynamodb:*
+              Resource: "*"
+        - PolicyName: write-cloudwatch-logs
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+                - logs:*
               Resource: "*"
 
   # Cluster that new containers will be launched into
@@ -370,9 +384,12 @@ Resources:
   # as monitor the number of running tasks and replace any that have crashed
   Service:
     Type: AWS::ECS::Service
+    DependsOn:
+      - LoadBalancerListener
     Properties:
       ServiceName: webdungeon-backend-service
       Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinition
       LaunchType: FARGATE
       DeploymentConfiguration:
         MaximumPercent: 200
@@ -380,13 +397,12 @@ Resources:
       DesiredCount: 1
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
+          AssignPublicIp: DISABLED
           SecurityGroups:
             - !Ref TaskSecurityGroup
           Subnets:
             - !Ref PrivateSubnet1
             - !Ref PrivateSubnet2
-      TaskDefinition: !Ref TaskDefinition
       LoadBalancers:
         -
           TargetGroupArn: !Ref TargetGroup
@@ -431,7 +447,7 @@ Resources:
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      HealthCheckIntervalSeconds: 6
+      HealthCheckIntervalSeconds: 20
       HealthCheckPath: /
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
