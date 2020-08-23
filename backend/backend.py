@@ -1,7 +1,7 @@
 import boto3
 from flask import Flask, abort, request
 from hashids import Hashids
-from random import uniform
+from random import randint
 from typing import Optional
 import os
 
@@ -39,10 +39,10 @@ def test_dynamodb():
 def register_player():
     player_name = request.form.get('name', 'Anonymous')
 
-    player_id = Hashids(salt=HASH_SALT).encode(uniform(1, 1_000_000))
+    player_id = Hashids(salt=HASH_SALT).encode(randint(1, 1_000_000))
     start_location = {
-        'x': {'N': uniform(0, 10)},
-        'y': {'N': uniform(0, 10)}
+        'x': {'N': str(randint(0, 10))},
+        'y': {'N': str(randint(0, 10))}
     }
     response = ddb.put_item(
         TableName='Player',
