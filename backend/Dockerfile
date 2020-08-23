@@ -8,8 +8,9 @@ RUN apt-get update \
 WORKDIR /usr/src/app
 COPY ./requirements.txt ./
 RUN pip install -r requirements.txt
-COPY ./*.py ./
+COPY *.py ./
+COPY util ./util
 
 EXPOSE 5000
-ENV FLASK_APP=backend.py
+ENV FLASK_APP=app.py
 CMD ["flask", "run", "--host=0.0.0.0"]
