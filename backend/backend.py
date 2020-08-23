@@ -1,5 +1,5 @@
 import boto3
-from flask import Flask, request
+from flask import Flask, abort, request
 from hashids import Hashids
 from random import uniform
 from typing import Optional
@@ -53,3 +53,15 @@ def register_player():
         }
     )
     return response
+
+@app.route('/player/<id>')
+def get_player(id):
+    if id is None:
+        abort(400, {"error": "Must supply a player ID"})
+    else:
+        return ddb.get_item(
+            TableName='Player',
+            Key={
+                'ID': id
+            }
+        ) 
