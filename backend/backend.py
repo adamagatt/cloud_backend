@@ -1,8 +1,11 @@
 import boto3
-from flask import Flask
-import json
+from flask import Flask, request
+from hashids import Hashids
+from random import uniform
 from typing import Optional
 import os
+
+HASH_SALT: str = 'webdungeon'
 
 def is_local() -> bool:
     return 'LOCAL_DB_ENDPOINT' in os.environ
@@ -19,6 +22,7 @@ ddb_keyargs = ({
 } if is_local() else {
     'region_name': 'ap-southeast-2',
 })
+ddb = boto3.client('dynamodb', **ddb_keyargs)
 
 app = Flask(__name__)
 
@@ -28,6 +32,24 @@ def hello():
 
 @app.route('/test/')
 def test_dynamodb():
-    ddb = boto3.client('dynamodb', **ddb_keyargs)
     response = ddb.list_tables()
     return {'message': response['TableNames']}
+
+@app.route('/player/', methods=['POST'])
+def register_player():
+    player_name = request.form.get('name', 'Anonymous')
+
+    player_id = Hashids(salt=HASH_SALT).encode(uniform(1, 1_000_000))
+    start_location = {
+        'x': uniform(0, 10),
+        'y': uniform(0, 10)
+    }
+    response = ddb.put_item(
+        TableName='Player',
+        Item={
+            'ID': player_id,
+            'name': player_name,
+            'location': start_location
+        }
+    )
+    return response
