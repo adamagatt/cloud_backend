@@ -22,7 +22,8 @@ ddb_keyargs = ({
 } if is_local() else {
     'region_name': 'ap-southeast-2',
 })
-ddb = boto3.client('dynamodb', **ddb_keyargs)
+ddb = boto3.resource('dynamodb', **ddb_keyargs)
+player_table = ddb.Table('Player')
 
 app = Flask(__name__)
 
@@ -41,27 +42,37 @@ def register_player():
 
     player_id = Hashids(salt=HASH_SALT).encode(randint(1, 1_000_000))
     start_location = {
-        'x': {'N': str(randint(0, 10))},
-        'y': {'N': str(randint(0, 10))}
+        'x': str(randint(0, 10)),
+        'y': str(randint(0, 10))
     }
-    response = ddb.put_item(
-        TableName='Player',
-        Item={
-            'ID': {'S': player_id},
-            'name': {'S': player_name},
-            'location': {'M': start_location}
-        }
-    )
-    return response
+    try: 
+        player_table.put_item(
+            Item={
+                'ID': player_id,
+                'name': player_name,
+                'location': start_location
+            }
+        )
+    except Exception as e:
+        print(e)
+    return {
+        'player_created': True,
+        'player_id': player_id
+    }
 
 @app.route('/player/<id>')
 def get_player(id):
     if id is None:
         abort(400, {"error": "Must supply a player ID"})
     else:
-        return ddb.get_item(
-            TableName='Player',
+        result = player_table.get_item(
             Key={
-                'ID': id
+                'ID': str(id)
             }
-        ) 
+        )
+        if 'Item' not in result:
+            abort(404)
+        else:
+            record = result['Item']
+            return record
+
