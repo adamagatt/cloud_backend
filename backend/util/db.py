@@ -1,5 +1,5 @@
 import boto3
-from typing import Dict
+from typing import Dict, List
 
 from .settings import get_db_endpoint, is_local
 
@@ -16,8 +16,8 @@ ddb = boto3.resource('dynamodb', **ddb_keyargs)
 
 player_table = ddb.Table('Player')
 
-def list_tables():
-    return ddb.list_tables()
+def list_tables() -> List[str]:
+    return [table.name for table in ddb.tables.all()]
 
 def put_player_in_db(id: str, name: str, start_location: Dict[str, str]) -> None:
     player_table.put_item(

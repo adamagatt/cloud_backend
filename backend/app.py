@@ -16,8 +16,7 @@ def hello():
 
 @app.route('/test/')
 def test_dynamodb():
-    response = list_tables()
-    return {'message': response['TableNames']}
+    return {'message': list_tables()}
 
 @app.route('/player/', methods=['POST'])
 def post_player_handler():
