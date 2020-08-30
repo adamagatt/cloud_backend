@@ -210,8 +210,7 @@ Resources:
 
   EC2InstanceProfile:
     Type: AWS::IAM::InstanceProfile
-    Properties: 
-      InstanceProfileName: ec2-instance-profile
+    Properties:
       Roles: 
         - !Ref EC2Role
 
