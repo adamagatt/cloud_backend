@@ -238,6 +238,7 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: t2.micro
+      SubnetId: !Ref PrivateSubnet 
       SecurityGroupIds:
         - !Ref EC2ServerSecurityGroup
       ImageId: ami-09ba19d0563c3d553
