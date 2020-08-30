@@ -237,10 +237,21 @@ Resources:
   EC2Instance:
     Type: AWS::EC2::Instance
     Properties:
-      InstanceType: "t2.micro"
+      InstanceType: t2.micro
       SecurityGroupIds:
         - !Ref EC2ServerSecurityGroup
       ImageId: ami-09ba19d0563c3d553
+      UserData:
+        Fn::Base64: 
+          !Sub |
+            #!/bin/bash -xe
+            yum update -y
+            amazon-linux-extras install docker
+            yum install docker -y
+            service docker start
+            usermod -a -G docker ec2-user
+            docker pull adamgatt/webdungeon_backend
+            docker run -p 5000:5000 adamgatt/webdungeon_backend
 
 Outputs:
   VPC:
