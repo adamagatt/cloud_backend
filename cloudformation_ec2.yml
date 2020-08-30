@@ -1,7 +1,6 @@
 Description:  A cloudformation stack for the webdungeon project, including
-  1) A VPC with public and private subnet with Internet and NAT gateways for communication.
+  1) A backend server hosted on a single EC2 instance in a public subnet
   2) Storage via DynamoDB with configured Key
-  3) Backend server hosted on single EC2 instance
 
 Parameters:
   EnvironmentName:
@@ -32,17 +31,6 @@ Resources:
         - Key: Name
           Value: !Sub ${EnvironmentName} Public Subnet
 
-  PrivateSubnet:
-    Type: AWS::EC2::Subnet
-    Properties:
-        VpcId: !Ref VPC
-        AvailabilityZone: !Select [ 0, !GetAZs  '' ]
-        CidrBlock: 10.192.140.0/24
-        MapPublicIpOnLaunch: false
-        Tags:
-        - Key: Name
-          Value: !Sub ${EnvironmentName} Private Subnet
-
   ### Route tables and security groups ###
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
@@ -66,27 +54,6 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnet
 
-  PrivateRouteTable:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref VPC
-      Tags:
-        - Key: Name
-          Value: !Sub ${EnvironmentName} Private Routes
-
-  DefaultPrivateRoute:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref PrivateRouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NatGateway
-
-  PrivateSubnetRouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      RouteTableId: !Ref PrivateRouteTable
-      SubnetId: !Ref PrivateSubnet
-
   PublicSubnetSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -97,20 +64,6 @@ Resources:
           -
             Description: HTTP access on port 5000
             CidrIp: 0.0.0.0/0
-            FromPort: 5000
-            ToPort: 5000
-            IpProtocol: tcp
-
-  EC2ServerSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-        GroupName: "ec2-server-security-group"
-        GroupDescription: "Allow access to EC2 server from public subnet"
-        VpcId: !Ref VPC
-        SecurityGroupIngress:
-          -
-            Description: HTTP access on port 5000
-            SourceSecurityGroupId: !Ref PublicSubnetSecurityGroup
             FromPort: 5000
             ToPort: 5000
             IpProtocol: tcp
@@ -183,7 +136,7 @@ Resources:
             Principal: "*"
             Resource: "*"
       RouteTableIds:
-        - !Ref 'PrivateRouteTable'
+        - !Ref 'PublicRouteTable'
       ServiceName: !Join [ "", [ "com.amazonaws.", { "Ref": "AWS::Region" }, ".dynamodb" ] ]
       VpcId: !Ref 'VPC'
 
@@ -238,10 +191,11 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: t2.micro
-      SubnetId: !Ref PrivateSubnet 
+      SubnetId: !Ref PublicSubnet 
       SecurityGroupIds:
-        - !Ref EC2ServerSecurityGroup
+        - !Ref PublicSubnetSecurityGroup
       ImageId: ami-09ba19d0563c3d553
+      IamInstanceProfile: !Ref EC2InstanceProfile
       UserData:
         Fn::Base64: 
           !Sub |
@@ -254,11 +208,37 @@ Resources:
             docker pull adamgatt/webdungeon_backend
             docker run -p 5000:5000 adamgatt/webdungeon_backend
 
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: 
+      InstanceProfileName: ec2-instance-profile
+      Roles: 
+        - !Ref EC2Role
+
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties: 
+      Description: "DynamoDB access for EC2 server"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: access-dynamo-db
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:*
+              Resource: "*"
+
 Outputs:
   VPC:
     Description: A reference to the created VPC
     Value: !Ref VPC
-
-  EC2ServerSecurityGroup:
-    Description: Security group for running ECS tasks
-    Value: !Ref EC2ServerSecurityGroup
