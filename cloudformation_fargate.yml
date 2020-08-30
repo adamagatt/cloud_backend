@@ -1,7 +1,7 @@
 Description:  A cloudformation stack for the webdungeon project, including
-  1) A VPC with public and private subnet  with Internet and NAT gateways for communication.
+  1) A VPC with public and private subnets across 2 AZs with Internet and NAT gateways for communication
   2) Storage via DynamoDB with configured Key
-  3) Backend server via ECS, with image fetched from DockerHub
+  3) Backend server using ECS-managed Fargate containers, with image fetched from DockerHub
 
 Parameters:
   EnvironmentName:

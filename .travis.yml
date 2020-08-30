@@ -15,7 +15,7 @@ script:
 deploy:
     provider: cloudformation
     region: ap-southeast-2
-    template: ./cloudformation.yml
+    template: ./cloudformation_ec2.yml
     stack_name: webdungeon
     access_key_id: $AWS_ACCESS_KEY
     secret_access_key: $AWS_SECRET_KEY
