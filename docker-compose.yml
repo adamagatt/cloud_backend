@@ -10,7 +10,7 @@ services:
       - backend
 
   backend:
-    image: adamgatt/webdungeon_backend:latest
+    image: adamgatt/cloud_backend:latest
     container_name: backend 
     build: backend
     volumes:

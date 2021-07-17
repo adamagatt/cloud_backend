@@ -4,19 +4,19 @@ services:
  - docker
 
 before_install:
- - docker build -t adamgatt/webdungeon_backend -f backend/Dockerfile backend
+ - docker build -t adamgatt/cloud_backend -f backend/Dockerfile backend
 
 script:
     # Set up docker credentials and then push the built image
  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
- - docker push adamgatt/webdungeon_backend
+ - docker push adamgatt/cloud_backend
  - docker logout # Remove credentials after pushing to dockerhub
 
 deploy:
     provider: cloudformation
     region: ap-southeast-2
     template: ./cloudformation_ec2.yml
-    stack_name: webdungeon
+    stack_name: cloud-backend
     access_key_id: $AWS_ACCESS_KEY
     secret_access_key: $AWS_SECRET_KEY
     capabilities: CAPABILITY_IAM

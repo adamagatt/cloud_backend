@@ -1,4 +1,4 @@
-Description:  A cloudformation stack for the webdungeon project, including
+Description:  A cloudformation stack for the cloud_backend project, including
   1) A VPC with public and private subnets across 2 AZs with Internet and NAT gateways for communication
   2) Storage via DynamoDB with configured Key
   3) Backend server using ECS-managed Fargate containers, with image fetched from DockerHub
@@ -7,7 +7,7 @@ Parameters:
   EnvironmentName:
     Description: An environment name that is prefixed to resource names
     Type: String
-    Default: webdungeon_vpc
+    Default: cloud_backend_vpc
 
 Resources:
   ###  VPC and subnets ###
@@ -317,15 +317,15 @@ Resources:
     Type: AWS::ECS::TaskDefinition
     DependsOn: LogGroup
     Properties:
-      Family: webdungeon-backend
+      Family: cloud_backend
       NetworkMode: awsvpc
       ExecutionRoleArn: !Ref TaskRole
       TaskRoleArn: !Ref TaskRole
       RequiresCompatibilities:
         - FARGATE
       ContainerDefinitions:
-        - Name: webdungeon-backend
-          Image: adamgatt/webdungeon_backend
+        - Name: cloud-backend
+          Image: adamgatt/cloud_backend
           PortMappings:
             - ContainerPort: 5000
           LogConfiguration:
@@ -340,7 +340,7 @@ Resources:
   LogGroup:
       Type: AWS::Logs::LogGroup
       Properties:
-        LogGroupName: ecs-web-dungeon-backend-logs
+        LogGroupName: ecs-web-cloud-backend-logs
 
   TaskRole:
     Type: AWS::IAM::Role
@@ -377,7 +377,7 @@ Resources:
   Cluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: webdungeon-backend-cluster   
+      ClusterName: cloud-backend-cluster   
 
   # The service. The service is a resource which allows you to run multiple
   # copies of a type of task, and gather up their logs and metrics, as well
@@ -387,7 +387,7 @@ Resources:
     DependsOn:
       - LoadBalancerListener
     Properties:
-      ServiceName: webdungeon-backend-service
+      ServiceName: cloud-backend-service
       Cluster: !Ref Cluster
       TaskDefinition: !Ref TaskDefinition
       LaunchType: FARGATE
@@ -407,14 +407,14 @@ Resources:
         -
           TargetGroupArn: !Ref TargetGroup
           ContainerPort: 5000
-          ContainerName: webdungeon-backend
+          ContainerName: cloud-backend
 
   # Application load balancer in the public subnet to route incoming
   # requests and create new tasks as required
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: webdungeon-backend-loadbalancer
+      Name: cloud-backend-loadbalancer
       Type: application
       IpAddressType: ipv4
       Scheme: internet-facing
@@ -453,7 +453,7 @@ Resources:
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
       TargetType: ip
-      Name: webdungeon-backend-service
+      Name: cloud-backend-service
       Port: 5000
       Protocol: HTTP
       UnhealthyThresholdCount: 2

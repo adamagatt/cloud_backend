@@ -4,7 +4,7 @@ from typing import Optional
 
 from .db import get_player_from_db, put_player_in_db
 
-hashids = Hashids(salt='webdungeon')
+hashids = Hashids(salt='cloud_backend')
 
 def register_player(name: str) -> Optional[str]:
     player_id = hashids.encode(randint(1, 1_000_000))
