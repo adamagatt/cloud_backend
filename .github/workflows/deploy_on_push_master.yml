@@ -8,10 +8,11 @@ jobs:
     name: aws_deploy
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
       - name: Build docker image and push to DockerHub
         id: build-image
         run: |
-          docker build -t adamgatt/cloud_backend -f backend/Dockerfile backend
+          docker build -t adamgatt/cloud_backend -f ./backend/Dockerfile backend
           # Set up docker credentials and then push the built image
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
           docker push adamgatt/cloud_backend
